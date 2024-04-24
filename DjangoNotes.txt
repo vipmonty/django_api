@@ -1,0 +1,578 @@
+Tutorial Url: https://www.w3schools.com/django/django_create_virtual_environment.php
+
+===============CHECK FOR PYTHON AND PIP====================
+python --version
+pip --version
+===========================================================
+
+===============Set up Venv=================================
+python -m venv venv
+===========================================================
+
+===============Activate Venv===============================
+source venv/Scripts/Activate
+===========================================================
+
+===============Deactivate==================================
+Deactivate
+===========================================================
+
+===============pip install Django==========================
+python -m pip install Django
+===========================================================
+
+===============list all pip installed Packages=============
+pip list
+===========================================================
+
+==============Check Django Version=========================
+django-admin --version
+===========================================================
+
+==============saving Pip installed List to txt file========
+pip freeze >> <name of file>.txt
+===========================================================
+
+
+=========================START DJANGO PROJECT==============
+django-admin startproject <name of project>
+===========================================================
+
+==================RUN DJANGO PROJECT=======================
+py manage.py runserver
+===========================================================
+
+==================CREATE APP: VIEW.PY =====================
+django-admin startapp <name of webAPP>
+===========================================================
+
+==================APPLY MIGRATIONS FOR APP(S)==============
+python manage.py migrate
+===========================================================
+
+
+
+views.py and urls.py works togeter
+============views.py========================
+from django.shortcuts import render
+from django.http import HttpResponse
+# Create your views here.
+
+def members(request):
+    return HttpResponse("Hello World!")
+============urls.py=========================
+urls.py declare endpoints and what should be returned
+
+from django.contrib import admin
+from django.urls import path
+from members import views
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('home/',views.members,name='members')
+]
+======================================================
+
+==============Make table from models.py=============
+in models.py:
+
+from django.db import models
+
+# Create your models here.
+class Member(models.Model):
+    firstname = models.CharField(max_length=255)
+    lastname = models.CharField(max_length=255)
+==================================================
+
+===============Activate Table==================
+py manage.py makemigrations members
+// this generates the Migrations folder and 0001_initial.py file
+// to apply changes to 0001_initial.py run the following line:
+py manage.py migrate
+===============================================
+
+==========OUTPUT MIGRATION HISTORY===========
+py manage.py sqlmigrate members 0001
+=============================================
+
+==========ADDING RECORDS TO DATABASE=========
+py manage.py shell
+=============================================
+
+Now we are in the shell, the result should be something like this:
+
+Python 3.9.2 (tags/v3.9.2:1a79785, Feb 19 2021, 13:44:55) [MSC v.1928 64 bit (AMD64)] on win32
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>>
+At the bottom, after the three >>> write the following:
+
+>>> from members.models import Member
+
+Hit [enter] and write this to look at the empty Member table:
+
+=========GRAB CONTENT OF TABLE====================
+>>> Member.objects.all()
+==================================================
+
+==========ADD/ Insert data RECORD TO TABLE===================
+Add a record to the table, by executing these two lines:
+
+>>> member = Member(firstname='Emil', lastname='Refsnes')
+>>> member.save()
+=================================================
+
+=========RETRIEVE TABLE VALUES===================
+>>> Member.objects.all().values()
+=================================================
+
+=========ADDING MULTIPLE RECORDS=================
+>>> member1 = Member(firstname='Tobias', lastname='Refsnes')
+>>> member2 = Member(firstname='Linus', lastname='Refsnes')
+>>> member3 = Member(firstname='Lene', lastname='Refsnes')
+>>> member4 = Member(firstname='Stale', lastname='Refsnes')
+>>> member5 = Member(firstname='Jane', lastname='Doe')
+>>> members_list = [member1, member2, member3, member4, member5]
+>>> for x in members_list:
+>>>   x.save() //remember to tab and then input x.save()
+==================================================
+
+
+
+==================UPDATE DATA=======================
+To update records that are already in the database, 
+we first have to get the record we want to update:
+
+>>> from members.models import Member
+>>> x = Member.objects.all()[4]
+
+x will now represent the member at index 4, which is "Stale Refsnes", but to make sure, let us see if that is correct:
+
+>>> x.firstname
+This should give you this result:
+'Stale'
+
+Now we can change the values of this record:
+
+>>> x.firstname = "Stalikken"
+>>> x.save()
+To see updated table
+>>> Member.objects.all().values()
+====================================================
+
+=================DELECTING DATA=====================
+To delete a record in a table, start by getting the record you want to delete:
+
+>>> from members.models import Member
+>>> x = Member.objects.all()[5]
+
+x will now represent the member at index 5, which is "Jane Doe", but to make sure, let us see if that is correct:
+
+>>> x.firstname
+
+This should give you this result:
+'Jane'
+Now we can delete the record:
+
+>>> x.delete()
+
+>>> Member.objects.all().values()
+========================================================
+
+============UPDATE MODEL================================
+Adding Fields in the Model
+
+djangoTutorial/members/models.py:
+
+from django.db import models
+
+class Member(models.Model):
+  firstname = models.CharField(max_length=255)
+  lastname = models.CharField(max_length=255)
+  phone = models.IntegerField()
+  joined_date = models.DateField()
+
+As you can see, we want to add phone and joined_date to our Member Model.
+
+This is a change in the Model's structure, and therefor we have to make a migration to tell Django that it has to update the database:
+
+py manage.py makemigrations members
+
+Which, in my case, will result in a prompt, because I try to add fields that are not allowed to be null, to a table that already contains records.
+
+As you can see, Django asks if I want to provide the fields with a specific value, or if I want to stop the migration and fix it in the model:
+
+py manage.py makemigrations members
+You are trying to add a non-nullable field 'joined_date' to members without a default; we can't do that (the database needs something to populate existing rows).
+Please select a fix:
+ 1) Provide a one-off default now (will be set on all existing rows with a null value for this column)
+ 2) Quit, and let me add a default in models.py
+Select an option:
+I will select option 2, and open the models.py file again and allow NULL values for the two new fields:
+
+djangoTutorial/members/models.py:
+
+from django.db import models
+
+class Member(models.Model):
+  firstname = models.CharField(max_length=255)
+  lastname = models.CharField(max_length=255)
+  phone = models.IntegerField(null=True) //<<<<<<
+  joined_date = models.DateField(null=True) //<<<<
+And make the migration once again:
+
+py manage.py makemigrations members
+
+Which will result in this:
+
+Migrations for 'members':
+  members\migrations\0002_member_joined_date_member_phone.py
+    - Add field joined_date to member
+    - Add field phone to member
+Run the migrate command:
+
+py manage.py migrate
+
+Which will result in this output:
+
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, members, sessions
+Running migrations:
+  Applying members.0002_member_joined_date_member_phone... OK
+============================Update new field========================================
+>>> Member.objects.all()[0]
+<Member: Member object (1)>
+>>> Member.objects.all().values()[0] 
+{'id': 1, 'firstname': 'Emil', 'lastname': 'Refsnes', 'phone': None, 'joined_date': None}
+>>> x.phone
+>>> x.lastname
+'Refsnes'
+>>> x.phone = 5551234
+>>> x.joined_date = '2022-01-05' 
+>>> x.save()
+>>> Member.objects.all().values()
+<QuerySet [{'id': 1, 'firstname': 'Emil', 'lastname': 'Refsnes', 'phone': 5551234, 'joined_date': datetime.date(2022, 1, 5)}, {'id': 2, 'firstname': 'Tobias', 'lastname': 'Refsnes', 'phone': None, 'joined_date': None}, {'id': 3, 'firstname': 'Linus', 'lastname': 'Refsnes', 'phone': None, 'joined_date': None}, {'id': 4, 'firstname': 'Lene', 'lastname': 'Refsnes', 'phone': None, 'joined_date': None}, {'id': 5, 'firstname': 'Stalikken', 'lastname': 'Refsnes', 'phone': None, 'joined_date': None}]>
+===========================================================
+
+===========CREATE TEMPLATE/HTML TO DISPLAY DATABASE CONTENT====
+Create Template
+After creating Models, with the fields and data we want in them, it is time to display the data in a web page.
+
+Start by creating an HTML file named all_members.html and place it in the /templates/ folder:
+
+my_tennis_club/members/templates/all_members.html:
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Members</h1>
+  
+<ul>
+  {% for x in mymembers %}
+    <li>{{ x.firstname }} {{ x.lastname }}</li>
+  {% endfor %}
+</ul>
+
+</body>
+</html>
+Do you see the {% %} brackets inside the HTML document?
+
+They are Django Tags, telling Django to perform some programming logic inside these brackets.
+
+Modify View
+Next we need to make the model data available in the template. This is done in the view.
+
+In the view we have to import the Member model, and send it to the template like this:
+
+my_tennis_club/members/views.py:
+
+from django.http import HttpResponse
+from django.template import loader
+from .models import Member
+
+def members(request):
+  mymembers = Member.objects.all().values()
+  template = loader.get_template('all_members.html')
+  context = {
+    'mymembers': mymembers,
+  }
+  return HttpResponse(template.render(context, request))
+
+//RUNSERVER TO SEE RESULTS
+
+python manage.py runserver
+===============================================================
+
+=======ADDING details.html with href to new endpoint===========
+Details Template
+The next step in our web page will be to add a Details page, where we can list more details about a specific member.
+
+Start by creating a new template called details.html:
+
+my_tennis_club/members/templates/details.html:
+
+<!DOCTYPE html>
+<html>
+
+<body>
+
+<h1>{{ mymember.firstname }} {{ mymember.lastname }}</h1>
+  
+<p>Phone: {{ mymember.phone }}</p>
+<p>Member since: {{ mymember.joined_date }}</p>
+
+<p>Back to <a href="/members">Members</a></p>
+
+</body>
+</html>
+Add Link in all-members Template
+The list in all_members.html should be clickable, and take you to the details page with the ID of the member you clicked on:
+
+my_tennis_club/members/templates/all_members.html:
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>Members</h1>
+  
+<ul>
+  {% for x in mymembers %}
+    <li><a href="details/{{ x.id }}">{{ x.firstname }} {{ x.lastname }}</a></li>
+  {% endfor %}
+</ul>
+
+</body>
+</html>
+Create new View
+Then create a new view in the views.py file, that will deal with incoming requests to the /details/ url:
+
+my_tennis_club/members/views.py:
+
+from django.http import HttpResponse
+from django.template import loader
+from .models import Member
+
+def members(request):
+  mymembers = Member.objects.all().values()
+  template = loader.get_template('all_members.html')
+  context = {
+    'mymembers': mymembers,
+  }
+  return HttpResponse(template.render(context, request))
+  
+def details(request, id):
+  mymember = Member.objects.get(id=id)
+  template = loader.get_template('details.html')
+  context = {
+    'mymember': mymember,
+  }
+  return HttpResponse(template.render(context, request))
+
+Add URLs
+Now we need to make sure that the /details/ url points to the correct view, with id as a parameter.
+
+Open the urls.py file and add the details view to the urlpatterns list:
+
+my_tennis_club/members/urls.py:
+
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('members/', views.members, name='members'),
+    path('members/details/<int:id>', views.details, name='details'),
+]
+
+py manage.py runserver
+=================================================================
+
+https://www.w3schools.com/django/django_master_template.php
+====MAKING THE TEMPLETE/HTML FILE AND LINKING IT================
+1)MAKE HTML FILE IN TEMPLATE FOLDER IN PROJECT FOLDER
+
+EX)
+Master
+my_tennis_club/members/templates/master.html:
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+
+{% block content %}
+{% endblock %}
+
+</body>
+</html>
+
+
+2)Modify Templates
+Now the two templates (all_members.html and details.html) can use this master.html template.
+
+This is done by including the master template with the 
+{% extends %} tag, and inserting a title block and a content block:
+Members
+my_tennis_club/members/templates/all_members.html:
+
+{% extends "master.html" %}
+
+{% block title %}
+  My Tennis Club - List of all members
+{% endblock %}
+
+
+{% block content %}
+  <h1>Members</h1>
+  
+  <ul>
+    {% for x in mymembers %}
+      <li><a href="details/{{ x.id }}">{{ x.firstname }} {{ x.lastname }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}
+
+
+Details.html
+my_tennis_club/members/templates/details.html:
+
+{% extends "master.html" %}
+
+{% block title %}
+  Details about {{ mymember.firstname }} {{ mymember.lastname }}
+{% endblock %}
+
+
+{% block content %}
+  <h1>{{ mymember.firstname }} {{ mymember.lastname }}</h1>
+  
+  <p>Phone {{ mymember.phone }}</p>
+  <p>Member since: {{ mymember.joined_date }}</p>
+  
+  <p>Back to <a href="/members">Members</a></p>
+  
+{% endblock %}
+
+======if you are have trouble got to this link=====================
+https://www.w3schools.com/django/django_master_template.php
+
+so the gist of connecting html files are:
+the master file needs
+{% block <What ever you want to name it> %}
+
+and the other files need this at the top
+{% extends "master.html" %}
+
+{% block <What ever you named it> %}
+the stuff you want to output to master.html
+{% endblock %}
+
+
+======ADDING main.html file===============
+https://www.w3schools.com/django/django_add_main.php
+
+1) add main.html to djangoTutorial>members>templates>main.html:
+{% extends "master.html" %}
+
+{% block title %}
+  My Tennis Club
+{% endblock %}
+
+
+{% block content %}
+  <h1>My Tennis Club</h1>
+
+  <h3>Members</h3>
+  
+  <p>Check out all our <a href="members/">members</a></p>
+  
+{% endblock %}
+
+2) edit view.py to add main.html
+djangoTutorial>members>views.py
+
+add this to view.py:
+========================================
+def main(request):
+  template = loader.get_template('main.html')
+  return HttpResponse(template.render())
+========================================
+
+3) edit url path / urlpatterns
+djangoTutorial>members>urls.py
+=================================================================
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('',views.main, name='main'), // <<<<<<<<<<<<<<<<<<<<this line was added to urls.py
+    path('members/', views.members, name='members'),
+    path('members/details/<int:id>', views.details, name='details'),
+]
+======================================================================
+
+4) add link back to main.html from all_members.html:
+======================================================================
+djangoTutorial>members>templates>all_members.html
+
+add these lines to all_members.html:
+  <p><a href="/">HOME</a></p>
+
+
+=========================Django 404(page not found) handling==========
+https://www.w3schools.com/django/django_404.php
+
+=========================Django Add Test View=========================
+https://www.w3schools.com/django/django_test_view.php
+
+==========GIT INIT COMMANDS================================
+echo "# django_api" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/vipmonty/django_api.git
+git push -u origin main
+============================================================
+=======GITHUB CREATE BRANCH, CHECKOUT, AND SWITCH===========
+To create a new branch in Git, you use the git branch command followed by the name you want to give to the new branch. Here's the basic syntax:
+
+bash
+Copy code
+git branch <branch_name>
+For example, if you want to create a branch called "feature-branch", you would use:
+
+bash
+Copy code
+git branch feature-branch
+This command will create the new branch based on the current state of your working directory, but it won't switch you to that branch. If you want to switch to the new branch immediately after creating it, you can use the git checkout command:
+
+bash
+Copy code
+git checkout <branch_name>
+Or, as of Git version 2.23, you can use the git switch command, which is more intuitive for switching branches:
+
+bash
+Copy code
+git switch <branch_name>
+So, combining the creation and switching commands, to create a branch called "feature-branch" and switch to it in one step, you can use:
+
+bash
+Copy code
+git checkout -b feature-branch
+Or using git switch:
+
+bash
+Copy code
+git switch -c feature-branch
+These commands will create the branch and switch you to it, allowing you to start working on your new branch immediately.
+========================================================================================
+
+
+
+
+
+
